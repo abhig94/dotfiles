@@ -29,7 +29,12 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- )
+ '(font-lock-builtin-face ((((class color) (min-colors 88) (background light)) (:foreground "yellow"))))
+ '(font-lock-comment-face ((((class color) (min-colors 88) (background light)) (:foreground "green"))))
+ '(font-lock-function-name-face ((((class color) (min-colors 88) (background light)) (:foreground "color-25"))))
+ '(font-lock-keyword-face ((((class color) (min-colors 88) (background light)) (:foreground "magenta"))))
+ '(font-lock-string-face ((((class color) (min-colors 88) (background light)) (:foreground "cyan"))))
+ '(minibuffer-prompt ((t (:foreground "color-25")))))
 
 ;; use C-\ to set input mode 
 (setq default-input-method "TeX")
@@ -71,3 +76,27 @@
  ;;  '("\\.m$" . matlab-mode))
  ;; (setq matlab-indent-function t)
  ;; (setq matlab-shell-command "matlab")
+
+
+;; The following lines are always needed.  Choose your own keys.
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-cb" 'org-iswitchb)
+
+
+
+;; mouse support
+(unless window-system
+  (require 'mouse)
+  (xterm-mouse-mode t)
+  (global-set-key [mouse-4] (lambda ()
+                              (interactive)
+                              (scroll-down 1)))
+  (global-set-key [mouse-5] (lambda ()
+                              (interactive)
+                              (scroll-up 1)))
+  (defun track-mouse (e))
+  (setq mouse-sel-mode t)
+)
+

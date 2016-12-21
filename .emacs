@@ -1,10 +1,13 @@
 ;; .emacs
 
+(setq user-full-name "Abhi Gupta")
+(setq user-mail-address "abhig94@gmail.com")
+
 ;;; uncomment this line to disable loading of "default.el" at startup
 ;; (setq inhibit-default-init t)
 
 ;; enable visual feedback on selections
-;(setq transient-mark-mode t)
+(setq transient-mark-mode t)
 
 ;; default to better frame titles
 (setq frame-title-format
@@ -36,7 +39,7 @@
  '(font-lock-string-face ((((class color) (min-colors 88) (background light)) (:foreground "cyan"))))
  '(minibuffer-prompt ((t (:foreground "color-25")))))
 
-;; use C-\ to set input mode 
+;; use C-\ to set input mode
 (setq default-input-method "TeX")
 
 ;; line numbers
@@ -49,7 +52,7 @@
 ;; fix tabs
 (setq tab-width 4) ; 4 spaces per tab
 
-;; ESS, for running julia/R/etc from inside emacs 
+;; ESS, for running julia/R/etc from inside emacs
 ;; (load "~/.emacsconfig/ESS/lisp/ess-site.el")
 ;; (setq inferior-julia-program-name "/usr/local/bin/julia-0.4.2")
 ;; (add-to-list 'load-path "~/.emacsconfig/ESS/lisp/")
@@ -99,4 +102,11 @@
   (defun track-mouse (e))
   (setq mouse-sel-mode t)
 )
+;; trailing whitespace
+;; trailing whitespace
+(setq-default show-trailing-whitespace t)
+(set-face-background 'trailing-whitespace "color-167") ; red
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
 
+;; symlinks
+(setq vc-follow-symlinks nil)

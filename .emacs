@@ -6,6 +6,7 @@
 ;;; uncomment this line to disable loading of "default.el" at startup
 ;; (setq inhibit-default-init t)
 
+
 ;; enable visual feedback on selections
 (setq transient-mark-mode t)
 
@@ -26,6 +27,7 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
+ '(frame-background-mode (quote dark))
  '(inhibit-startup-screen t))
 (custom-set-faces
   ;; custom-set-faces was added by Custom.
@@ -34,6 +36,7 @@
   ;; If there is more than one, they won't work right.
  '(font-lock-builtin-face ((((class color) (min-colors 88) (background light)) (:foreground "yellow"))))
  '(font-lock-comment-face ((((class color) (min-colors 88) (background light)) (:foreground "green"))))
+ '(font-lock-constant-face ((t (:foreground "cyan"))))
  '(font-lock-function-name-face ((((class color) (min-colors 88) (background light)) (:foreground "color-25"))))
  '(font-lock-keyword-face ((((class color) (min-colors 88) (background light)) (:foreground "magenta"))))
  '(font-lock-string-face ((((class color) (min-colors 88) (background light)) (:foreground "cyan"))))
@@ -110,3 +113,39 @@
 
 ;; symlinks
 (setq vc-follow-symlinks nil)
+
+;; package.el
+(load "package.el")
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/"))
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize) ;; You might already have this line
+
+
+;; color-theme (damn you emacs 23!)
+(add-to-list 'load-path "~/.emacs.d/color-theme-6.6.0")
+(require 'color-theme)
+(eval-after-load "color-theme"
+  '(progn
+     (color-theme-initialize)
+     (color-theme-hober)))
+
+;; ;; solarized
+;;(require 'color-theme-solarized)
+;;(color-theme-solarized)
+(color-theme-comidia)
+;; (color-theme-calm-forest)
+
+;; backup files
+(setq backup-directory-alist
+      `((".*" . , "~/.emacs.d/backup/")))
+(setq auto-save-file-name-transforms
+      `((".*" , "~/.emacs.d/backup/" t)))
+(setq auto-save-list-file-prefix nil)
+
+

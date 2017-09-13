@@ -6,6 +6,12 @@
 ;;; uncomment this line to disable loading of "default.el" at startup
 ;; (setq inhibit-default-init t)
 
+;; Move backup files to central location
+(setq backup-directory-alist
+      `((".*" . , "~/.emacs.d/backup/")))
+(setq auto-save-file-name-transforms
+      `((".*" , "~/.emacs.d/backup/" t)))
+(setq auto-save-list-file-prefix nil)
 
 ;; enable visual feedback on selections
 (setq transient-mark-mode t)

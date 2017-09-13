@@ -7,8 +7,7 @@ fi
 
 source ~/.aliases
 source ~/.paths
-#source ~/.profile
-#source ~/.bash_profile
+
 
 # Access nth most recent modified file.
 latestn(){
@@ -24,11 +23,8 @@ latestr(){
 # Hide files from ls
 hide="--hide='*.aux' --hide='*.bbl' --hide='*.blg' --hide='*.fls' --hide='*.log' --hide='*.nav' --hide='*.out' --hide='*.snm' --hide='*.thm' --hide='*.toc' --hide='*~'"
 
-# Show directory names in light blue
+alias ls="ls --color=auto --sort=extension --group-directories-first $hide"
 
-#if [[ ! $TERM =~ screen ]]; then
-#    exec tmux
-#fi
 
 # unset gui password tool
 unset SSH_ASKPASS
@@ -56,4 +52,8 @@ parse_display() {
 }
 
 
+# Set grep options
+export GREP_OPTIONS='-inr --color=auto'
+
+# Evince launches in the background
 ev() { evince "$@" 2>/dev/null & }

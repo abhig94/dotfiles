@@ -155,3 +155,9 @@
 (setq auto-save-list-file-prefix nil)
 
 
+;; Set default max line width to 80 characters
+(setq-default fill-column 80)
+
+;; Unique buffer names, e.g. filename<dir1> and filename<dir2>
+(require 'uniquify)
+(setq uniquify-buffer-name-style (quote post-forward-angle-brackets))

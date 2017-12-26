@@ -67,27 +67,29 @@
 ;; (add-to-list 'load-path "~/.emacsconfig/ESS/lisp/")
 
 ;MATLAB formatting
-(add-to-list 'load-path "~/.emacs.d/")
-(load "matlab.el")
+;(add-to-list 'load-path "~/.emacs.d/")
+;%(load "matlab.el")
 
-(autoload 'matlab-mode "matlab" "Enter Matlab mode." t)
-(setq auto-mode-alist (cons '("\\.m$" . matlab-mode) auto-mode-alist))
-(defun my-matlab-mode-hook ()
-(setq matlab-indent-function t) ; if you want function bodies indented
-(setq fill-column 76) ; where auto-fill should wrap
-(turn-on-auto-fill))
-(setq matlab-mode-hook 'my-matlab-mode-hook)
-(autoload 'matlab-shell "matlab" "Interactive Matlab mode." t)
-(defun my-matlab-shell-mode-hook ()
-'())
-(setq matlab-mode-hook 'my-matlab-mode-hook)
+;; (autoload 'matlab-mode "matlab" "Enter Matlab mode." t)
+;; (setq auto-mode-alist (cons '("\\.m$" . matlab-mode) auto-mode-alist))
+;; (defun my-matlab-mode-hook ()
+;; (setq matlab-indent-function t) ; if you want function bodies indented
+;; (setq fill-column 76) ; where auto-fill should wrap
+;; (turn-on-auto-fill))
+;; (setq matlab-mode-hook 'my-matlab-mode-hook)
+;; (autoload 'matlab-shell "matlab" "Interactive Matlab mode." t)
+;; (defun my-matlab-shell-mode-hook ()
+;; '())
+;; (setq matlab-mode-hook 'my-matlab-mode-hook)
 
- ;; (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
- ;; (add-to-list
- ;;  'auto-mode-alist
- ;;  '("\\.m$" . matlab-mode))
- ;; (setq matlab-indent-function t)
- ;; (setq matlab-shell-command "matlab")
+
+
+ (autoload 'matlab-mode "matlab" "Matlab Editing Mode" t)
+ (add-to-list
+  'auto-mode-alist
+  '("\\.m$" . matlab-mode))
+ (setq matlab-indent-function t)
+ (setq matlab-shell-command "matlab")
 
 
 ;; The following lines are always needed.  Choose your own keys.

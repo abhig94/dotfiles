@@ -1,0 +1,5 @@
+[user]
+	email = abhig94@gmail.com
+	name = Abhi Gupta
+[core]
+	editor = emacs -nw

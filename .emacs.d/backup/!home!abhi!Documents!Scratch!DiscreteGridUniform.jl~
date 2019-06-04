@@ -1,0 +1,29 @@
+
+@distr_support DiscreteGridUniform d.grid[1] d.grid[end]
+span(d::DiscreteGridUniform) = d.grid[end] - d.grid[0]
+probval(d::DiscreteGridUniform) = d.pv
+params(d::DiscreteGridUniform) = d.grid
+"""
+The `DiscreteGridUniform` is just a discrete uniform defined over a given grid
+of points instead of integers a, a+1,...,b-1, b. The grid need not be evenly
+spaced, but it should be sorted.
+
+This is a (very) partial implementation of this random variable
+"""
+struct DiscreteGridUniform <: DiscreteUnivariateDistribution
+    grid::Vector{Float64}
+    pv::Float64
+
+    function DiscreteGridUniform(grid::Vector{Real})
+        @assert issorted(grid)
+        new(grid, 1.0 / length(grid))
+    end
+    function DiscreteGridUniform(grid)
+        grid = collect(grid)
+        @assert issorted(grid)
+        new(grid, 1.0 / length(grid))
+
+    end
+end
+
+mean(d::DiscreteGridUniform) = Distributions.mean(d.grid)

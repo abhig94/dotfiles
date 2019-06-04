@@ -1,0 +1,9 @@
+
+
+iter_result = iterate(iterable)
+while iter_result !== nothing
+    (element, state) = iter_result
+    # body
+    iter_result = iterate(iterable, state)
+end
+

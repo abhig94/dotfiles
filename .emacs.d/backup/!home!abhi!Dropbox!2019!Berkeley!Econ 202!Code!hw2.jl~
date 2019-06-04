@@ -1,0 +1,129 @@
+using Plots, Distributions
+gr()
+# unicodeplots()
+# plotlyjs()
+
+
+include("hw2_fcns.jl")
+
+# parameters
+θ = 4.
+β = .96^(1/12)
+μ = .0021
+σ_η = .0032
+K = .0245
+C = 1.
+ρ = .66
+σ_ε = .08 #.0428
+w = (θ - 1)/θ # real wage for MC
+
+# B
+n_a = 31
+n_rp = 301
+σ_a = σ_ε / sqrt(1 - ρ^2)
+μ_a = 0
+
+a = collect(range(μ_a - 3*σ_a, stop = μ_a + 3*σ_a, length = n_a))
+rp = collect(range(-.3, stop = .3, length = n_rp))
+
+# C
+a_dist = Normal(0, σ_a)
+P_a = zeros(n_a, n_a)
+a_step = a[2] - a[1]
+a_half_step = a_step / 2
+
+for i in 1:n_a
+    P_a[i, 1] = cdf(a_dist, a[1] - ρ * a[i] + a_half_step)
+    P_a[i, end] = 1 - cdf(a_dist, a[end] - ρ * a[i] - a_half_step)
+    for j in 2:n_a-1
+        z = a[j] - ρ * a[i]
+        P_a[i,j] = cdf(a_dist, z + a_half_step) - cdf(a_dist, z - a_half_step)
+    end
+end
+
+rp_dist = Normal(0, σ_η)
+P_rp = zeros(n_rp, n_rp)
+rp_step = rp[2] - rp[1]
+rp_half_step = rp_step / 2
+
+for i in 1:n_rp
+    P_rp[i, 1] = cdf(rp_dist, rp[1] - rp[i] + μ + rp_half_step)
+    P_rp[i, end] = 1 - cdf(rp_dist, rp[end] - rp[i] + μ - rp_half_step)
+    for j in 2:n_rp-1
+        z = rp[j] - rp[i] + μ
+        P_rp[i,j] = cdf(rp_dist, z + rp_half_step) - cdf(rp_dist, z - rp_half_step)
+    end
+end
+
+# D
+Π = zeros(n_rp, n_a) # rp by tech
+function profit(rp::Float64, a::Float64, θ::Float64)
+    w = (θ - 1)/θ
+    return C * exp(-θ * rp) * (exp(rp) - w * exp(-a))
+end
+profit(rp::Float64, a::Float64) = profit(rp, a, θ)
+
+for i in 1:n_rp
+    for j in 1:n_a
+        Π[i,j] = profit(rp[i], a[j])
+    end
+end
+
+# E, F
+# V = zeros(n_rp, n_a)
+# policy = ones(n_rp, n_a)
+# V_tol = 1e-6
+
+# # G, H
+# V, policy = V_iteration(V_tol, V, Π, β, μ, ρ, θ, K, a, rp, P_a, P_rp)
+
+# I
+cross_section_plot = plot(rp,policy[:,1], ylab = "new rp", xlab = "old rp",label="lowest a")
+plot!(rp,policy[:,16],label="a=0")
+plot!(rp, policy[:,end],label="highest a")
+
+f(x,y) = policy[closest(x,rp),closest(y,a)]
+surf_plot = plot(rp, a, f, st = :surf, camera = [-20,100])
+
+
+savefig(cross_section_plot, "plots/cross_section.png")
+savefig(surf_plot, "plots/policy.png")
+mmmmmmmmmmmmm
+# J
+T = 200
+a_t = zeros(T) # log(A)
+PL_t = zeros(T) # log(P)
+p_t = zeros(T) # log(p), rp = p_t - P_t
+
+# Pick starting values
+a_t[1] = 0.
+PL_t[1] = -.5
+
+for t in 2:T
+    a_t[t] = ρ*a_t[t-1] + rand(a_dist)
+    PL_t[t] = PL_t[t-1] + μ + rand(rp_dist)
+end
+
+A_t = w./exp.(a_t) # A
+MC_t = exp.(PL_t) .* A_t  # nominal MC
+rp_t = zeros(T) # relative price
+
+function policy_fcn(old_rel_price::Float64, P_old::Float64, P_new::Float64, tech::Float64)
+    π = rp[closest(P_new - P_old, rp)]
+    rel_price = old_rel_price - π
+    rp_ind = closest(rel_price, rp)
+    a_ind = closest(tech, a)
+    return policy[rp_ind, a_ind]
+end
+
+for t in 2:T
+    rp_t[t] = policy_fcn(rp_t[t-1], PL_t[t-1], PL_t[t], a_t[t])
+end
+
+p_t = rp_t .+ PL_t # nominal price
+
+last_plot = plot(exp.(PL_t), label = "Price Level")
+plot!(MC_t, label = "Nominal MC")
+plot!(exp.(p_t), label = "Nominal Price")
+
+savefig(last_plot, "plots/simulation.png")

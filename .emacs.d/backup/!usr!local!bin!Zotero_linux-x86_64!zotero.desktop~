@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Zotero
+Exec=bash -c "$(dirname $(readlink -f %k))/zotero -url %U"
+Icon=/usr/local/bin/Zotero_linux-x86_64/chrome/icons/default/default256.png
+Type=Application
+Terminal=false
+Categories=Office;
+MimeType=text/plain

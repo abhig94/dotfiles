@@ -1,0 +1,21 @@
+include("vfi.jl")
+using Main.VFI
+
+θ = 2
+u(c) = (c^(1-θ)-1)/(1-θ)
+vf = ValueFunction()
+
+X_grid = compute_grid(vf.n, vf.B, true)
+
+print("Checking V0(X) = 0...")
+@assert all(vf.V.(X_grid) .== 0)
+println("done")
+
+vf_iterate(vf)
+print("Checking V1(X) = u(X)...")
+@assert all(vf.V(X_grid) .== vf.u.(X_grid))
+println("done")
+
+print("Checking C1(X) = X...")
+@assert all(vf.C(X_grid) .== X_grid)
+println("done")

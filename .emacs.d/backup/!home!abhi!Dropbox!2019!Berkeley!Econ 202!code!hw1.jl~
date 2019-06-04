@@ -1,0 +1,59 @@
+using DataStructures, Plots, Statistics
+gr()
+include("hw1_funcs.jl")
+include("gensys.jl")
+
+make_plots = false
+run_sim = true
+
+# First, enumerate the parameters, states, equations, and shocks of the system
+params = Dict(:α=>1/3, :β=>.99, :δ=>.02, :ρ=>.95, :σ_z_sh=>.007)
+
+if make_plots
+    # Build the state space system matrices
+    T, C, R, vars = RBC_model(params)
+
+    # plot the IRFs in the baseline case
+    ε = ones(1,1)
+    part_b_IRF = IRF(T, R, C, ε ./ R[vars[:z_t]])
+    plot_b = plot_IRFs(part_b_IRF, vars)
+
+    # redo with ρ≈1
+    params[:ρ] = .99999
+    T, C, R = RBC_model(params)
+    part_c_IRF = IRF(T, R, C, ε ./ R[vars[:z_t]])
+    plot_c = plot_IRFs(part_c_IRF, vars)
+
+    # redo with α=2/3
+    params[:ρ] = .95
+    params[:α] = 2/3
+    T, C, R = RBC_model(params)
+    part_d1_IRF = IRF(T, R, C, ε ./ R[vars[:z_t]])
+    plot_d1 = plot_IRFs(part_d1_IRF, vars)
+
+    params[:ρ] = .99999
+    params[:α] = 2/3
+    T, C, R = RBC_model(params)
+    part_d2_IRF = IRF(T, R, C, ε ./ R[vars[:z_t]])
+    plot_d2 = plot_IRFs(part_d2_IRF, vars)
+
+    savefig(plot_b, "plots/hw1_b.png")
+    savefig(plot_c, "plots/hw1_c.png")
+    savefig(plot_d1, "plots/hw1_d1.png")
+    savefig(plot_d2, "plots/hw1_d2.png")
+end
+
+if run_sim
+    # simulate the baseline case
+    n_periods = 1000000
+
+    params[:α] = 1/3
+    params[:ρ] = .0
+    std_devs_a, sim_a, draws_a = simulate(T, R, C, vars, params, n_periods)
+
+    # simulate with α = 2/3
+    params[:α] = 2/3
+    std_devs_b, sim_b, draws_b  = simulate(T, R, C, vars, params, n_periods)
+end
+
+nothing

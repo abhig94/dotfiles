@@ -1,0 +1,171 @@
+function dictify(v::Vector)
+    d = OrderedDict()
+    for (i,k) in enumerate(v)
+        d[k] = i
+    end
+    return d
+end
+
+function IRF(T, R, C, ε, n_periods = 100)
+    n_states = size(T,1)
+    n_shocks = size(R,2)
+    response = zeros(n_states, n_periods)
+
+    response[:,1] = R*ε + C
+
+    for t in 2:n_periods
+        response[:,t] = T*response[:,t-1] + C
+    end
+    return response
+end
+
+function plot_IRFs(response, vars)
+    n_plots = length(vars)
+    n_rows = isodd(n_plots) ? Int(floor(n_plots/2)) + 1 : Int(n_plots/2)
+    plots = []
+    for v in keys(vars)
+        series = response[vars[v], :]
+        p = plot(response[vars[v], :], title = string(v))
+        if maximum(series) - minimum(series) < .1
+            ylims!(p, (minimum(series)-.5, maximum(series)+.5))
+        end
+            push!(plots, p)
+    end
+    output = plot(plots..., layout = (n_rows,2), legend = false)
+    return output
+end
+
+function test_model(params)
+    var_names = [:k_t, :z_t, :c_t]#, :Ec_t1]
+    vars = dictify(var_names)
+    eq_names = [:eq_k, :eq_z, :eq_ee]#, :eq_Ec]
+    eq = dictify(eq_names)
+    shocks = OrderedDict(:z_sh=>1)
+    errors = OrderedDict(:Ec_sh=>1)
+
+    n_states = length(vars)
+    n_shocks = length(shocks)
+    n_errors = length(errors)
+
+    # Construct the Γ0, Γ1, Ψ, Π, C matrices for Gensys:
+    # Γ0s(t) = Γ1s(t-1) + C + Ψz_t + Πη_t
+    k_bar = ((1/params[:β] - (1 - params[:δ]))/params[:α])^(-1/(1 - params[:α]))
+    y_bar = k_bar^params[:α]
+    c_bar = y_bar - params[:δ] * k_bar
+    i_bar = params[:δ] * k_bar
+
+    Γ0 = zeros(n_states, n_states)
+    Γ1 = zeros(n_states, n_states)
+    C = zeros(n_states, 1)
+    Ψ = zeros(n_states, n_shocks)
+    Π = zeros(n_states, n_errors)
+
+    # law of motion for capital
+    Γ0[eq[:eq_k] ,vars[:k_t]] = 1.
+    Γ1[eq[:eq_k] ,vars[:k_t]] = 1/params[:β]
+    Γ0[eq[:eq_k] ,vars[:z_t]] = -y_bar/k_bar
+    Γ0[eq[:eq_k] ,vars[:c_t]] = c_bar/k_bar
+
+    # shock process
+    Γ0[eq[:eq_z] ,vars[:z_t]] = 1.
+    Γ1[eq[:eq_z] ,vars[:z_t]] = params[:ρ]
+    Ψ[eq[:eq_z], shocks[:z_sh]] = 1. # params[:σ_z_sh]
+
+    # Euler Equation
+    Γ0[eq[:eq_ee] ,vars[:c_t]] = 1.
+    Γ1[eq[:eq_ee] ,vars[:c_t]] = 1.
+    Γ0[eq[:eq_ee] ,vars[:z_t]] = -(1 - params[:β]*(1 - params[:δ]))
+    Γ1[eq[:eq_ee] ,vars[:k_t]] = (1 - params[:β]*(1 - params[:δ]))*(params[:α] - 1)
+    # Γ0[eq[:eq_ee], vars[:Ec_t1]] = -1.
+
+    # expected consumption
+    # Γ0[eq[:eq_Ec], vars[:c_t]] = 1
+    # Γ1[eq[:eq_Ec], vars[:Ec_t1]] = 1
+    # Π[eq[:eq_Ec], errors[:Ec_sh]] = 1
+
+    T, C, R = gensys(Γ0, Γ1, C, Ψ, Π)
+
+    return T, C, R, vars, Γ0, Γ1, C, Ψ, Π
+end
+
+function RBC_model(params)
+    var_names = [:k_t, :z_t, :c_t, :i_t, :y_t, :w_t]
+    vars = dictify(var_names)
+    eq_names = [:eq_k, :eq_z, :eq_ee, :eq_i, :eq_y, :eq_w]
+    eq = dictify(eq_names)
+    shocks = OrderedDict(:z_sh=>1)
+
+    n_states = length(vars)
+    n_shocks = length(shocks)
+
+    # Construct the Γ0, Γ1, Ψ, Π, C matrices for Gensys:
+    # Γ0s(t) = Γ1s(t-1) + C + Ψz_t + Πη_t
+    k_bar = ((1/params[:β] - (1 - params[:δ]))/params[:α])^(-1/(1 - params[:α]))
+    y_bar = k_bar^params[:α]
+    c_bar = y_bar - params[:δ] * k_bar
+    i_bar = params[:δ] * k_bar
+
+    Γ0 = zeros(n_states, n_states)
+    Γ1 = zeros(n_states, n_states)
+    C = zeros(n_states, 1)
+    Ψ = zeros(n_states, n_shocks)
+    Π = zeros(n_states, 1) # no expecational errors in this system
+
+    # law of motion for capital
+    Γ0[eq[:eq_k] ,vars[:k_t]] = 1.
+    Γ1[eq[:eq_k] ,vars[:k_t]] = 1/params[:β]
+    Γ0[eq[:eq_k] ,vars[:z_t]] = -y_bar/k_bar
+    Γ0[eq[:eq_k] ,vars[:c_t]] = c_bar/k_bar
+
+    # shock process
+    Γ0[eq[:eq_z] ,vars[:z_t]] = 1.
+    Γ1[eq[:eq_z] ,vars[:z_t]] = params[:ρ]
+    Ψ[eq[:eq_z], shocks[:z_sh]] = 1. # params[:σ_z_sh]
+
+    # Euler Equation
+    Γ0[eq[:eq_ee] ,vars[:c_t]] = 1.
+    Γ1[eq[:eq_ee] ,vars[:c_t]] = 1.
+    Γ0[eq[:eq_ee] ,vars[:z_t]] = -(1 - params[:β]*(1 - params[:δ]))
+    Γ1[eq[:eq_ee] ,vars[:k_t]] = (1 - params[:β]*(1 - params[:δ]))*(params[:α] - 1)
+
+    # investment identity
+    Γ0[eq[:eq_i] ,vars[:i_t]] = 1.
+    Γ0[eq[:eq_i] ,vars[:c_t]] = c_bar/i_bar
+    Γ0[eq[:eq_i] ,vars[:y_t]] = -y_bar/i_bar
+
+    # output identity
+    Γ0[eq[:eq_y] ,vars[:y_t]] = 1.
+    Γ0[eq[:eq_y] ,vars[:k_t]] = -params[:α]
+    Γ0[eq[:eq_y] ,vars[:z_t]] = -1.
+
+    # wage identity
+    Γ0[eq[:eq_w] ,vars[:w_t]] = 1
+    Γ0[eq[:eq_w] ,vars[:y_t]] = -1.
+
+    T, C, R = gensys(Γ0, Γ1, C, Ψ, Π)
+
+    # T[eq[:eq_z], :] .= 0
+    # T[eq[:eq_z], vars[:z_t]] = params[:ρ]
+
+    return T, C, R, vars, Γ0, Γ1, C, Ψ, Π
+end
+
+function simulate(T, R, C, vars, params, n_periods = 10000)
+    draws = randn(n_periods, 1) * params[:σ_z_sh] #/ R[vars[:z_t]]
+    n_states = size(T,1)
+    sim = zeros(n_states, n_periods)
+
+    sim[:,1] = R * draws[1]
+    for t in 2:n_periods
+        sim[:,t] = T*sim[:,t-1] + R*draws[t] + C
+    end
+
+    # std_devs = mapslices(std, sim, dims = 2)
+    std_devs = OrderedDict()
+    for v in keys(vars)
+        std_devs[v] = std(sim[vars[v], :]) * 100
+    end
+    return std_devs, sim, draws
+end
+
+nothing

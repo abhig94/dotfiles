@@ -1,0 +1,98 @@
+module VFI
+
+export ValueFunction, vf_iterate, maximize, compute_grid
+
+using Interpolations
+using Distributions: mean
+
+mutable struct ValueFunction
+    n::Int
+    Y_grid::Vector{Float64} # grid of Y values
+    B::Float64
+    u::Function
+    β::Float64
+    r::Float64
+    V::Function # value function
+    C::Function # policy function
+    k::Int # iteration counter
+end
+
+"""
+```
+ValueFunction(n, u, Y_lim, B, β, r)
+```
+
+The default constructor for the `ValueFunction` object
+"""
+function ValueFunction(n::Int = 500, u::Function = log, Y_lim::Float64 = 100.,
+                       B::Float64 = 600., β::Float64 = .8, r::Float64 = 0.)
+    k = 0
+    Y_grid = compute_grid(n, Y_lim, false)
+    V(X::Real) = 0
+    C(X::Real) = 0
+    return ValueFunction(n, Y_grid, B, u, β, r, V, C, k)
+end
+
+function compute_grid(n::Int, lim::Real, inclusive::Bool = true)
+    e = 100/n
+    !inclusive && (lim = lim - e)
+    return collect(e:2e:lim)
+end
+
+function maximize(X::Real, vf::ValueFunction)
+    # build the grid of valid consumption choices
+    C_grid = compute_grid(vf.n, X, true)
+
+    # E[V_t+1] is calculated by constructing the random variable V_t+1
+    @inline V_t1(C::Real) = vf.V.((X-C)*(1+vf.r) .+ vf.Y_grid)
+    @inline E_V(C::Real) = mean(V_t1(C))
+
+    # V_t(X) and C*(X) can be found by maximizing over the grid
+    V_grid = vf.u.(C_grid) + vf.β*E_V.(C_grid)
+    V_star, ind = findmax(V_grid)
+    C_star = C_grid[ind]
+    return V_star, C_star
+end
+
+"""
+```
+vf_iterate(vf)
+vf_iterate(vf, k)
+```
+
+The `vf_iterate` function performs 1 or k iterations on the `ValueFunction` object.
+"""
+function vf_iterate(vf::ValueFunction)
+    # find the value/policy functions on the grid
+    X_grid = compute_grid(vf.n, vf.B, true)
+    @inline m(X) = maximize(X, vf)
+    output = m.(X_grid)
+    V_vals = map(x->x[1], output)
+    C_Vals = map(x->x[2], output)
+
+    # interpolate and update vf
+    vf.V = interpolate(X_grid, V_vals)
+    vf.C = interpolate(X_grid, C_vals)
+    vf.k += 1
+    return
+end
+
+vf_iterate(vf::ValueFunction, k::Int) =  k <= 1 ? vf_iterate(vf) : vf_iterate(vf, k-1)
+
+function interpolate(grid::Vector{Float64}, vals::Vector{Float64})
+    itp = LinearInterpolation(grid, vals)
+    f(X::Real) = X < grid[1] ? itp(grid[0]) : ( X > grid[end] ? itp(grid[end]) : itp(X))
+
+    # function f(X::Real)
+    #     if X < grid[1]
+    #         return 0
+    #     elseif X > grid[end]
+    #         return itp(grid[end])
+    #     else
+    #         return itp(X)
+    #     end
+    # end
+    return f
+end
+
+end

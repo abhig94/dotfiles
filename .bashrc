@@ -165,3 +165,9 @@ export GREP_OPTIONS='-inr --color=auto'
 
 # Evince launches in the background
 ev() { evince "$@" 2>/dev/null & }
+
+# Emacs shortcut
+alias e='emacs -nw'
+
+# source paths
+source ~/.paths
